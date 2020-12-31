@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <signal.h>
 
 #if defined (__WIN32__) || (__WIN64__)
 #include <Windows.h>

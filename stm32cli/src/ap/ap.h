@@ -13,6 +13,6 @@
 
 void apInit(void);
 void apMain(int argc, char *argv[]);
-
+void apExit(void);
 
 #endif /* SRC_AP_AP_H_ */

@@ -10,10 +10,16 @@
 
 
 
-
+void exitISR(int sig)
+{
+  apExit();
+}
 
 int main(int argc, char *argv[])
 {
+  signal(SIGINT, exitISR);
+  setbuf(stdout, NULL);
+
   hwInit();
   apInit();
 
