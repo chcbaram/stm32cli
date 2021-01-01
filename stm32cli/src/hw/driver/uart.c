@@ -382,14 +382,7 @@ uint32_t uartGetBaud(uint8_t ch)
   uint32_t ret = 0;
 
 
-  switch(ch)
-  {
-    case _DEF_UART1:
-      break;
-
-    case _DEF_UART2:
-      break;
-  }
+  ret = uart_tbl[ch].baud;
 
   return ret;
 }
