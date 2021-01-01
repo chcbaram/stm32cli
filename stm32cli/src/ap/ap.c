@@ -7,7 +7,6 @@
 
 
 #include "ap.h"
-#include <conio.h>
 
 
 
