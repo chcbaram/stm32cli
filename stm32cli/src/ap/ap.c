@@ -10,6 +10,7 @@
 
 
 
+cmd_t cmd;
 
 
 void apInit(void)
@@ -17,6 +18,8 @@ void apInit(void)
   logPrintf("stm32cli v1.0\n\n");
 
   cliOpen(_DEF_UART1, 57600);
+
+  cmdInit(&cmd);
 }
 
 void apMain(int argc, char *argv[])
@@ -50,6 +53,8 @@ void apMain(int argc, char *argv[])
     apExit();
   }
 
+  cmdOpen(&cmd, _DEF_UART2, 57600);
+
 
   while(1)
   {
@@ -57,12 +62,27 @@ void apMain(int argc, char *argv[])
 
     if (uartAvailable(_DEF_UART1) > 0)
     {
-      uartPrintf(_DEF_UART2, "%c", uartRead(_DEF_UART1));
-    }
+      uint8_t rx_data;
 
-    if (uartAvailable(_DEF_UART2) > 0)
-    {
-      uartPrintf(_DEF_UART1, "%c", uartRead(_DEF_UART2));
+      rx_data = uartRead(_DEF_UART1);
+
+      if (rx_data == '1')
+      {
+        uint8_t tx_data;
+
+        tx_data = 1;
+        cmdSendCmd(&cmd, 0x10, &tx_data, 1);
+        printf("LED ON\n");
+      }
+
+      if (rx_data == '2')
+      {
+        uint8_t tx_data;
+
+        tx_data = 0;
+        cmdSendCmd(&cmd, 0x10, &tx_data, 1);
+        printf("LED OFF\n");
+      }
     }
   }
 }
