@@ -71,8 +71,14 @@ void apMain(int argc, char *argv[])
         uint8_t tx_data;
 
         tx_data = 1;
-        cmdSendCmd(&cmd, 0x10, &tx_data, 1);
-        printf("LED ON\n");
+        if (cmdSendCmdRxResp(&cmd, 0x10, &tx_data, 1, 1000) == true)
+        {
+          printf("LED ON\n");
+        }
+        else
+        {
+          printf("LED ON Fail\n");
+        }
       }
 
       if (rx_data == '2')
@@ -80,8 +86,29 @@ void apMain(int argc, char *argv[])
         uint8_t tx_data;
 
         tx_data = 0;
-        cmdSendCmd(&cmd, 0x10, &tx_data, 1);
-        printf("LED OFF\n");
+        if (cmdSendCmdRxResp(&cmd, 0x10, &tx_data, 1, 1000) == true)
+        {
+          printf("LED OFF\n");
+        }
+        else
+        {
+          printf("LED OFF Fail\n");
+        }
+      }
+
+      if (rx_data == '3')
+      {
+        uint8_t tx_data;
+
+        tx_data = 2;
+        if (cmdSendCmdRxResp(&cmd, 0x10, &tx_data, 1, 1000) == true)
+        {
+          printf("LED Toggle\n");
+        }
+        else
+        {
+          printf("LED Toggle Fail\n");
+        }
       }
     }
   }
