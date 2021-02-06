@@ -7,10 +7,10 @@
 
 
 #include "ap.h"
+#include "boot/boot.h"
 
 
 
-cmd_t cmd;
 
 
 void apInit(void)
@@ -18,15 +18,20 @@ void apInit(void)
   logPrintf("stm32cli v1.0\n\n");
 
   cliOpen(_DEF_UART1, 57600);
-
-  cmdInit(&cmd);
 }
 
 void apMain(int argc, char *argv[])
 {
+  bool ret;
+  uint8_t errcode;
   uint8_t  uart_ch;
   char    *uart_port;
   uint32_t uart_baud;
+  uint8_t boot_ver[32];
+  uint8_t boot_name[32];
+  uint8_t firm_ver[32];
+  uint8_t firm_name[32];
+
 
 
   if (argc != 3)
@@ -43,75 +48,69 @@ void apMain(int argc, char *argv[])
   logPrintf("uart port : %s\n", uart_port);
   logPrintf("uart baud : %d bps\n", uart_baud);
 
-  if (uartOpenPort(uart_ch, uart_port, uart_baud) == true)
+
+  ret = bootInit(uart_ch, uart_port, uart_baud);
+  if (ret != true)
   {
-    logPrintf("uart open : OK\n");
-  }
-  else
-  {
-    logPrintf("uart open : Fail\n");
+    logPrintf("bootInit Fail\n");
     apExit();
   }
 
-  cmdOpen(&cmd, _DEF_UART2, 57600);
-
+  logPrintf("\n\nboot start...\n");
 
   while(1)
   {
-    //cliMain();
-
-    if (uartAvailable(_DEF_UART1) > 0)
+    //-- 부트로더 버전 읽기
+    //
+    errcode = bootCmdReadBootVersion(boot_ver);
+    if (errcode != CMD_OK)
     {
-      uint8_t rx_data;
-
-      rx_data = uartRead(_DEF_UART1);
-
-      if (rx_data == '1')
-      {
-        uint8_t tx_data;
-
-        tx_data = 1;
-        if (cmdSendCmdRxResp(&cmd, 0x10, &tx_data, 1, 1000) == true)
-        {
-          printf("LED ON\n");
-        }
-        else
-        {
-          printf("LED ON Fail\n");
-        }
-      }
-
-      if (rx_data == '2')
-      {
-        uint8_t tx_data;
-
-        tx_data = 0;
-        if (cmdSendCmdRxResp(&cmd, 0x10, &tx_data, 1, 1000) == true)
-        {
-          printf("LED OFF\n");
-        }
-        else
-        {
-          printf("LED OFF Fail\n");
-        }
-      }
-
-      if (rx_data == '3')
-      {
-        uint8_t tx_data;
-
-        tx_data = 2;
-        if (cmdSendCmdRxResp(&cmd, 0x10, &tx_data, 1, 1000) == true)
-        {
-          printf("LED Toggle\n");
-        }
-        else
-        {
-          printf("LED Toggle Fail\n");
-        }
-      }
+      logPrintf("bootCmdReadBootVersion fail : %d\n", errcode);
+      break;
     }
+    logPrintf("boot ver \t: %s\n",  boot_ver);
+
+
+    //-- 부트로더 이름 읽기
+    //
+    errcode = bootCmdReadBootName(boot_name);
+    if (errcode != CMD_OK)
+    {
+      logPrintf("bootCmdReadBootName fail : %d\n", errcode);
+      break;
+    }
+    logPrintf("boot name \t: %s\n", boot_name);
+
+
+    //-- 펌웨어 버전 읽기
+    //
+    errcode = bootCmdReadFirmVersion(firm_ver);
+    if (errcode != CMD_OK)
+    {
+      logPrintf("bootCmdReadFirmVersion fail : %d\n", errcode);
+      break;
+    }
+    logPrintf("firm ver \t: %s\n",  firm_ver);
+
+
+    //-- 펌웨어 이름 읽기
+    //
+    errcode = bootCmdReadFirmName(firm_name);
+    if (errcode != CMD_OK)
+    {
+      logPrintf("bootCmdReadFirmName fail : %d\n", errcode);
+      break;
+    }
+    logPrintf("firm name \t: %s\n", firm_name);
+
+
+
+
+    break;
   }
+
+
+  apExit();
 }
 
 void apExit(void)
