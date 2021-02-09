@@ -18,6 +18,11 @@ enum
 
 
 
+#define TX_BLOCK_LENGTH     512
+
+
+
+
 int32_t getFileSize(char *file_name);
 
 
@@ -47,7 +52,7 @@ void apMain(int argc, char *argv[])
   int32_t  file_size;
   char     file_name[256];
   bool     file_run;
-
+  FILE     *fp;
 
   if (argc != 7)
   {
@@ -158,7 +163,7 @@ void apMain(int argc, char *argv[])
     //-- Flash Erase
     //
     pre_time = millis();
-    err_code = bootCmdFlashErase(0x8010000, (512-64)*1024, 5000);
+    err_code = bootCmdFlashErase(file_addr, file_size, 5000);
     exe_time = millis()-pre_time;
     if (err_code != CMD_OK)
     {
@@ -168,6 +173,69 @@ void apMain(int argc, char *argv[])
     logPrintf("flash erase \t: OK (%dms)\n", exe_time);
 
 
+
+    //-- Flash Write
+    //
+    if ((fp = fopen(file_name, "rb")) == NULL)
+    {
+      logPrintf("Unable to open %s\n", file_name);
+      apExit();
+    }
+
+
+    uint32_t addr;
+    uint32_t len;
+    bool     write_done = false;
+    uint8_t  tx_buf[TX_BLOCK_LENGTH];
+
+    addr = file_addr;
+    pre_time = millis();
+    while(1)
+    {
+      if (!feof(fp))
+      {
+        len = fread(tx_buf, 1, TX_BLOCK_LENGTH, fp);
+
+        err_code = bootCmdFlashWrite(addr, tx_buf, len, 1000);
+        if (err_code == CMD_OK)
+        {
+          addr += len;
+
+
+          logPrintf("flash write \t: %d%%\r", (addr-file_addr) * 100 / file_size);
+
+
+          if ((addr-file_addr) >= file_size)
+          {
+            write_done = true;
+            break;
+          }
+        }
+        else
+        {
+          logPrintf("bootCmdFlashWrite fail : 0x%x, %d\n", addr, err_code);
+          break;
+        }
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    fclose(fp);
+    exe_time = millis()-pre_time;
+
+    logPrintf("\n");
+
+    if (write_done == true)
+    {
+      logPrintf("flash write \t: OK (%dms)\n", exe_time);
+    }
+    else
+    {
+      logPrintf("flash write \t: Fail \n");
+    }
 
     break;
   }
