@@ -51,8 +51,11 @@ void apMain(int argc, char *argv[])
   uint32_t file_addr;
   int32_t  file_size;
   char     file_name[256];
-  bool     file_run;
+  bool     file_run = false;
   FILE     *fp;
+
+
+  (void)file_type;
 
   if (argc != 7)
   {
@@ -101,6 +104,16 @@ void apMain(int argc, char *argv[])
     apExit();
   }
   logPrintf("file size : %d bytes\n", file_size);
+
+  if (*argv[6] == '1')
+  {
+    file_run = true;
+    logPrintf("file run  : true\n");
+  }
+  else
+  {
+    logPrintf("file run  : false\n");
+  }
 
 
   //-- boot 시작
@@ -162,15 +175,16 @@ void apMain(int argc, char *argv[])
 
     //-- Flash Erase
     //
+    logPrintf("flash erase \t: ");
     pre_time = millis();
     err_code = bootCmdFlashErase(file_addr, file_size, 5000);
     exe_time = millis()-pre_time;
     if (err_code != CMD_OK)
     {
-      logPrintf("bootCmdFlashErase fail : %d\n", err_code);
+      logPrintf("\nbootCmdFlashErase fail : %d\n", err_code);
       break;
     }
-    logPrintf("flash erase \t: OK (%dms)\n", exe_time);
+    logPrintf("OK (%dms)\n", exe_time);
 
 
 
@@ -231,6 +245,20 @@ void apMain(int argc, char *argv[])
     if (write_done == true)
     {
       logPrintf("flash write \t: OK (%dms)\n", exe_time);
+
+      if (file_run == true)
+      {
+        err_code = bootCmdJumpToFw();
+        if (err_code == CMD_OK)
+        {
+          logPrintf("jump to fw \t: OK\n");
+        }
+        else
+        {
+          logPrintf("jump to fw \t: fail, %d\n", err_code);
+        }
+        bootDeInit(uart_ch);
+      }
     }
     else
     {
