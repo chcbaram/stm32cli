@@ -18,6 +18,7 @@
 
 
 #define CMD_OK                0
+#define CMD_ERR_DIR           254
 #define CMD_TIMEOUT           255
 
 

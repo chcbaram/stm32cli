@@ -232,7 +232,14 @@ bool cmdSendCmdRxResp(cmd_t *p_cmd, uint8_t cmd, uint8_t *p_data, uint32_t lengt
   {
     if (cmdReceivePacket(p_cmd) == true)
     {
-      p_cmd->error = p_cmd->rx_packet.error;
+      if (p_cmd->rx_packet.dir == CMD_DIR_S_TO_M)
+      {
+        p_cmd->error = p_cmd->rx_packet.error;
+      }
+      else
+      {
+        p_cmd->error = CMD_ERR_DIR;
+      }
       ret = true;
       break;
     }
