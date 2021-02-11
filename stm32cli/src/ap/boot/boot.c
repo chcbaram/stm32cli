@@ -35,6 +35,21 @@ bool bootInit(uint8_t channel, char *port_name, uint32_t baud)
 
   uartSetPortName(channel, port_name);
 
+
+  printf("run bootloader\n");
+  ret = uartOpen(channel, 1200);
+  if (ret == true)
+  {
+    uartPrintf(channel, "BOOT 5555AAAA");
+    uartClose(channel);
+  }
+  else
+  {
+    return false;
+  }
+
+  delay(1000);
+
   ret = cmdOpen(&cmd, channel, baud);
 
 
@@ -60,6 +75,7 @@ uint8_t bootCmdReadBootVersion(uint8_t *p_version)
     {
       p_version[i] = p_cmd->rx_packet.data[i];
     }
+    p_version[31] = 0;
   }
   else
   {
@@ -82,6 +98,7 @@ uint8_t bootCmdReadBootName(uint8_t *p_str)
     {
       p_str[i] = p_cmd->rx_packet.data[i];
     }
+    p_str[31] = 0;
   }
   else
   {
@@ -104,6 +121,7 @@ uint8_t bootCmdReadFirmVersion(uint8_t *p_version)
     {
       p_version[i] = p_cmd->rx_packet.data[i];
     }
+    p_version[31] = 0;
   }
   else
   {
@@ -126,6 +144,7 @@ uint8_t bootCmdReadFirmName(uint8_t *p_str)
     {
       p_str[i] = p_cmd->rx_packet.data[i];
     }
+    p_str[31] = 0;
   }
   else
   {
