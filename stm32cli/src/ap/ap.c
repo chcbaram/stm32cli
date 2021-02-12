@@ -201,6 +201,8 @@ void apMain(int argc, char *argv[])
     uint32_t len;
     bool     write_done = false;
     uint8_t  tx_buf[TX_BLOCK_LENGTH];
+    uint16_t write_percent;
+    uint16_t pre_percent = 0;
 
     addr = file_addr;
     pre_time = millis();
@@ -215,8 +217,13 @@ void apMain(int argc, char *argv[])
         {
           addr += len;
 
+          write_percent = (addr-file_addr) * 100 / file_size;
 
-          logPrintf("flash write \t: %d%%\r", (addr-file_addr) * 100 / file_size);
+          if ((write_percent/10) != pre_percent)
+          {
+            logPrintf("flash write \t: %d%%\r", write_percent);
+            pre_percent = (write_percent/10);
+          }
 
 
           if ((addr-file_addr) >= file_size)
