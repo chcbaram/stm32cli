@@ -28,6 +28,7 @@
 #include "mcp2515.h"
 #include "i2c.h"
 #include "cmd.h"
+#include "util.h"
 
 
 void hwInit(void);

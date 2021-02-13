@@ -35,7 +35,7 @@ bool bootInit(uint8_t channel, char *port_name, uint32_t baud)
 
   uartSetPortName(channel, port_name);
 
-  printf("run bootloader\n");
+  printf("\nrun bootloader...\n");
   ret = uartOpen(channel, 1200);
   if (ret == true)
   {

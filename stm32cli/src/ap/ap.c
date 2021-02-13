@@ -24,12 +24,13 @@ enum
 
 
 int32_t getFileSize(char *file_name);
+bool addTagToBin(char *src_filename, char *dst_filename);
 
 
 
 void apInit(void)
 {
-  logPrintf("stm32cli v1.0\n\n");
+  logPrintf("stm32cli V210213R1\n\n");
 
   cliOpen(_DEF_UART1, 57600);
 }
@@ -51,6 +52,7 @@ void apMain(int argc, char *argv[])
   uint32_t file_addr;
   int32_t  file_size;
   char     file_name[256];
+  char     dst_filename[256];
   bool     file_run = false;
   FILE     *fp;
 
@@ -113,6 +115,23 @@ void apMain(int argc, char *argv[])
   else
   {
     logPrintf("file run  : false\n");
+  }
+
+
+  if (file_type == FILE_TYPE_FW)
+  {
+    logPrintf("\r\nadd tag...\r\n");
+    strcpy(dst_filename, file_name);
+    strcat(dst_filename, ".fw");
+
+    if(addTagToBin(file_name, dst_filename) != true)
+    {
+      fprintf( stderr, "  Add tag info to binary Fail! \n");
+      apExit();
+    }
+
+
+    strcpy(file_name, dst_filename);
   }
 
 
@@ -307,4 +326,120 @@ int32_t getFileSize(char *file_name)
   }
 
   return ret;
+}
+
+bool addTagToBin(char *src_filename, char *dst_filename)
+{
+  FILE    *p_fd;
+  uint8_t *buf;
+  size_t   src_len;
+  uint16_t t_crc = 0;
+  firm_tag_t *p_tag;
+
+
+  if (!strcmp(src_filename, dst_filename))
+  {
+    fprintf( stderr, "  src file(%s) and dst file(%s) is same! \n", src_filename, dst_filename );
+    apExit();
+  }
+
+  /* Open src file */
+  if ((p_fd = fopen(src_filename, "rb")) == NULL)
+  {
+    fprintf( stderr, "  unable to open src file(%s)\n", src_filename );
+    exit( 1 );
+  }
+
+
+  fseek( p_fd, 0, SEEK_END );
+  src_len = ftell( p_fd );
+  fseek( p_fd, 0, SEEK_SET );
+
+
+  if ((buf = (uint8_t *) calloc(src_len, sizeof(uint8_t))) == NULL)
+  {
+    fclose(p_fd);
+    fprintf( stderr, "  malloc Error \n");
+    apExit();
+  }
+
+  /* Copy read fp to buf */
+  if(fread( &buf[0], 1, src_len, p_fd ) != src_len)
+  {
+    fclose(p_fd);
+    free(buf);
+    fprintf( stderr, "  length is wrong! \n" );
+    apExit();
+  }
+  fclose(p_fd);
+
+
+  p_tag = (firm_tag_t *)buf;
+
+
+  if (p_tag->magic_number == FLASH_MAGIC_NUMBER)
+  {
+    free(buf);
+    fprintf( stderr, "  already magic number\n");
+    return true;
+  }
+  if (p_tag->magic_number != 0xAAAA5555)
+  {
+    free(buf);
+    fprintf( stderr, "  wrong magic number 0x%X \n", p_tag->magic_number);
+    return false;
+  }
+
+
+
+  /* Calculate CRC16 */
+  size_t i;
+  uint32_t tag_size;
+
+  tag_size = p_tag->size_tag;
+
+  for (i = 0; i<src_len-tag_size; i++)
+  {
+    utilUpdateCrc(&t_crc, buf[tag_size + i]);
+  }
+
+  p_tag->magic_number     = FLASH_MAGIC_NUMBER;
+  p_tag->tag_flash_start  = p_tag->addr_fw;
+  p_tag->tag_flash_end    = p_tag->addr_fw + (src_len - tag_size);
+  p_tag->tag_flash_length = p_tag->tag_flash_end - p_tag->tag_flash_start;
+  p_tag->tag_length       = tag_size;
+  strcpy((char *)p_tag->tag_date_str, __DATE__);
+  strcpy((char *)p_tag->tag_time_str, __TIME__);
+  p_tag->tag_flash_crc = t_crc;
+
+
+
+  /* Store data to dst file */
+  if ((p_fd = fopen(dst_filename, "wb")) == NULL)
+  {
+   free(buf);
+   fprintf( stderr, "  unable to open dst file(%s)\n", dst_filename );
+   apExit();
+  }
+
+  if(fwrite(buf, 1, src_len, p_fd) != src_len)
+  {
+   fclose(p_fd);
+   free(buf);
+   //_unlink(dst_filename);
+   fprintf( stderr, "  total write fail! \n" );
+   apExit();
+  }
+
+  printf("created file  : %s (%d KB)\n", dst_filename, (int)((src_len)/1024) );
+  printf("tag fw start  : 0x%08X \n", p_tag->tag_flash_start);
+  printf("tag fw end    : 0x%08X \n", p_tag->tag_flash_end);
+  printf("tag crc       : 0x%04X \n", p_tag->tag_flash_crc);
+  printf("tag date      : %s \n", p_tag->tag_date_str);
+  printf("tag time      : %s \n", p_tag->tag_time_str);
+
+  fclose(p_fd);
+  free(buf);
+
+  return true;
 }
