@@ -272,7 +272,7 @@ void apMain(int argc, char *argv[])
     {
       logPrintf("flash write \t: OK (%dms)\n", exe_time);
 
-      if (file_run == true)
+      if (file_run == true && file_type == FILE_TYPE_FW)
       {
         pre_time = millis();
         err_code = bootCmdJumpToFw();
