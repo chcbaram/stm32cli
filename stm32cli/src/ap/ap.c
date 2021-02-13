@@ -12,8 +12,10 @@
 
 enum
 {
+  FILE_TYPE_NONE,
   FILE_TYPE_FW,
   FILE_TYPE_BIN,
+  FILE_TYPE_TAG,
 };
 
 
@@ -55,13 +57,52 @@ void apMain(int argc, char *argv[])
   char     dst_filename[256];
   bool     file_run = false;
   FILE     *fp;
+  uint8_t  arg_cnt = 0;
 
 
-  (void)file_type;
+  file_type = FILE_TYPE_NONE;
 
-  if (argc != 7)
+  if (argc >= 4)
+  {
+    if (strcmp(argv[3], "fw") == 0)
+    {
+      file_type = FILE_TYPE_FW;
+      arg_cnt = 7;
+    }
+    if (strcmp(argv[3], "bin") == 0)
+    {
+      file_type = FILE_TYPE_BIN;
+      arg_cnt = 7;
+    }
+    if (strcmp(argv[3], "tag") == 0)
+    {
+      file_type = FILE_TYPE_TAG;
+      arg_cnt = 5;
+    }
+  }
+
+
+  if (file_type == FILE_TYPE_NONE && argc != arg_cnt)
   {
     logPrintf("stm32cli com1 57600 type[fw:bin] 0x8010000 file_name run[0:1]\n");
+    logPrintf("stm32cli com1 57600 type[tag] file_name\n");
+    apExit();
+  }
+
+
+  if (file_type == FILE_TYPE_TAG)
+  {
+    logPrintf("\r\nadd tag...\r\n");
+
+    strcpy(file_name, argv[4]);
+    strcpy(dst_filename, file_name);
+    strcat(dst_filename, ".fw");
+
+    if(addTagToBin(file_name, dst_filename) != true)
+    {
+      fprintf( stderr, "  Add tag info to binary Fail! \n");
+      apExit();
+    }
     apExit();
   }
 
@@ -77,21 +118,10 @@ void apMain(int argc, char *argv[])
   logPrintf("uart baud : %d bps\n", uart_baud);
 
 
-  if (strcmp(argv[3], "fw") == 0)
-  {
-    file_type = FILE_TYPE_FW;
-    logPrintf("file type : firmware\n");
-  }
-  else if (strcmp(argv[3], "bin") == 0)
-  {
-    file_type = FILE_TYPE_BIN;
-    logPrintf("file type : binary\n");
-  }
-  else
-  {
-    logPrintf("file type error\n");
-    apExit();
-  }
+  if (file_type == FILE_TYPE_FW)  logPrintf("file type : firmware\n");
+  if (file_type == FILE_TYPE_BIN) logPrintf("file type : binary\n");
+  if (file_type == FILE_TYPE_TAG) logPrintf("file type : tag\n");
+
 
   file_addr = (uint32_t)strtoul(argv[4], (char **)NULL, (int) 0);
   logPrintf("file addr : 0x%X\n", file_addr);
