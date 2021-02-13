@@ -274,10 +274,12 @@ void apMain(int argc, char *argv[])
 
       if (file_run == true)
       {
+        pre_time = millis();
         err_code = bootCmdJumpToFw();
+        exe_time = millis()-pre_time;
         if (err_code == CMD_OK)
         {
-          logPrintf("jump to fw \t: OK\n");
+          logPrintf("jump to fw \t: OK (%dms)\n", exe_time);
         }
         else
         {

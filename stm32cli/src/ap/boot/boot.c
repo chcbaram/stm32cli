@@ -232,7 +232,7 @@ uint8_t bootCmdJumpToFw(void)
   cmd_t *p_cmd = &cmd;
 
 
-  ret = cmdSendCmdRxResp(p_cmd, BOOT_CMD_JUMP_TO_FW, NULL, 0, 100);
+  ret = cmdSendCmdRxResp(p_cmd, BOOT_CMD_JUMP_TO_FW, NULL, 0, 1000);
   if (ret == true && p_cmd->error == CMD_OK)
   {
     err_code = CMD_OK;
