@@ -133,7 +133,9 @@ uint32_t uartOpenPC(uint8_t ch, char *port_name, uint32_t baud)
   if (p_uart->serial_handle == INVALID_HANDLE_VALUE)
   {
     if (log_err)
-      printf("Error opening serial port!\n");
+    {
+      //printf("Error opening serial port!\n");
+    }
     return 2;
   }
 

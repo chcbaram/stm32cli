@@ -49,7 +49,15 @@ bool bootInit(uint8_t channel, char *port_name, uint32_t baud)
 
   delay(1000);
 
-  ret = cmdOpen(&cmd, channel, baud);
+  for (int i=0; i<3; i++)
+  {
+    ret = cmdOpen(&cmd, channel, baud);
+    if (ret == true)
+    {
+      break;
+    }
+    delay(2000);
+  }
 
 
   return ret;
