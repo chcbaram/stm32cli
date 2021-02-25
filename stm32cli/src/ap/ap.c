@@ -20,7 +20,7 @@ enum
 
 
 
-#define TX_BLOCK_LENGTH     512
+#define TX_BLOCK_LENGTH     32
 
 
 
