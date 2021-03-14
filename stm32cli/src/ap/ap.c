@@ -20,7 +20,7 @@ enum
 
 
 
-#define TX_BLOCK_LENGTH     32
+#define TX_BLOCK_LENGTH     256
 
 
 
@@ -32,7 +32,7 @@ bool addTagToBin(char *src_filename, char *dst_filename);
 
 void apInit(void)
 {
-  logPrintf("stm32cli V210213R1\n\n");
+  logPrintf("stm32cli V210227R1\n\n");
 
   cliOpen(_DEF_UART1, 57600);
 }
@@ -379,7 +379,7 @@ bool addTagToBin(char *src_filename, char *dst_filename)
   if ((p_fd = fopen(src_filename, "rb")) == NULL)
   {
     fprintf( stderr, "  unable to open src file(%s)\n", src_filename );
-    exit( 1 );
+    apExit();
   }
 
 
